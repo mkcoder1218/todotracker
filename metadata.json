@@ -1,0 +1,7 @@
+{
+  "name": "ZenTask AI",
+  "description": "A sophisticated, AI-enhanced task management application featuring Google Auth, real-time Firebase syncing, custom categories, and smart time management.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
