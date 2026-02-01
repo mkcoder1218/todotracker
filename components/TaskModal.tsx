@@ -322,6 +322,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                   ? new Date(t.dueDate).toLocaleTimeString([], {
                                       hour: "2-digit",
                                       minute: "2-digit",
+                                      hour12: true,
                                     })
                                   : "No date"}
                                 )
@@ -469,6 +470,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                             return d.toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
+                              hour12: true,
                             });
                           })()}
                         </span>

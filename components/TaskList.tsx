@@ -118,6 +118,7 @@ const TaskList: React.FC<TaskListProps> = ({
                     {dueDate.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
+                      hour12: true,
                     })}
                   </div>
                 )}

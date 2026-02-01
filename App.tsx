@@ -24,8 +24,7 @@ import Login from "./components/Login";
 import { AppSkeleton } from "./components/AppSkeleton";
 import { Menu } from "lucide-react";
 import Statistics from "./components/Statistics";
-
-// ... (existing imports)
+import TaskDetailModal from "./components/TaskDetailModal";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,6 +35,7 @@ const App: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
 
   const [currentView, setCurrentView] = useState<"tasks" | "statistics">(
     "tasks",
@@ -265,8 +265,7 @@ const App: React.FC = () => {
               }
               onDeleteTask={handleDeleteTask}
               onEditTask={(task) => {
-                setEditingTask(task);
-                setIsTaskModalOpen(true);
+                setViewingTask(task);
               }}
             />
           ) : (
@@ -289,6 +288,27 @@ const App: React.FC = () => {
           existingTasks={tasks}
         />
       )}
+
+      <TaskDetailModal
+        isOpen={!!viewingTask}
+        onClose={() => setViewingTask(null)}
+        task={viewingTask}
+        category={categories.find((c) => c.id === viewingTask?.categoryId)}
+        onEdit={(task) => {
+          setViewingTask(null);
+          setEditingTask(task);
+          setIsTaskModalOpen(true);
+        }}
+        onDelete={(taskId) => {
+          handleDeleteTask(taskId);
+          setViewingTask(null);
+        }}
+        linkedTask={
+          viewingTask?.dependencyId
+            ? tasks.find((t) => t.id === viewingTask.dependencyId)
+            : undefined
+        }
+      />
     </div>
   );
 };
