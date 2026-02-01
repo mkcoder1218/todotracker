@@ -160,6 +160,14 @@ const TaskModal: React.FC<TaskModalProps> = ({
     setIsAiLoading(false);
   };
 
+  const setStartIn = (minutes: number) => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + minutes);
+    const pad = (n: number) => (n < 10 ? "0" + n : n);
+    const localIso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setDueDate(localIso);
+  };
+
   return (
     <>
       <div
@@ -392,15 +400,55 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       </div>
                     </div>
                   </div>
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                      Due Date/Time
+                      Start Date & Time
                       {linkedTaskId && (
                         <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200">
                           Auto-Set
                         </span>
                       )}
                     </label>
+                    {!linkedTaskId && (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setStartIn(0)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
+                        >
+                          Now
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStartIn(10)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
+                        >
+                          +10m
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStartIn(20)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
+                        >
+                          +20m
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStartIn(30)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
+                        >
+                          +30m
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStartIn(60)}
+                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
+                        >
+                          +1h
+                        </button>
+                      </div>
+                    )}
                     <input
                       type="datetime-local"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
@@ -408,6 +456,27 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       onChange={(e) => setDueDate(e.target.value)}
                       disabled={!!linkedTaskId}
                     />
+                    {dueDate && (
+                      <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+                        <Clock className="h-3 w-3" />
+                        Deadline:{" "}
+                        <span className="font-medium text-slate-700">
+                          {(() => {
+                            const d = new Date(dueDate);
+                            d.setMinutes(
+                              d.getMinutes() + (estimatedMinutes || 30),
+                            );
+                            return d.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            });
+                          })()}
+                        </span>
+                        <span className="text-slate-400">
+                          ({estimatedMinutes}m duration)
+                        </span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
