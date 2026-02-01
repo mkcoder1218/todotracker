@@ -1,9 +1,14 @@
-
 export interface Category {
   id: string;
   name: string;
   color: string;
   userId: string;
+}
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
 }
 
 export interface Task {
@@ -18,6 +23,7 @@ export interface Task {
   reminderSent: boolean;
   userId: string;
   createdAt: number;
+  subtasks?: Subtask[];
 }
 
 export interface UserProfile {
