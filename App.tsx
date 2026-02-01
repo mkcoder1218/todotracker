@@ -37,9 +37,9 @@ const App: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
 
-  const [currentView, setCurrentView] = useState<"tasks" | "statistics">(
-    "tasks",
-  );
+  const [currentView, setCurrentView] = useState<
+    "tasks" | "statistics" | "completed"
+  >("tasks");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -170,10 +170,20 @@ const App: React.FC = () => {
       window.removeEventListener("delete-category", handleCategoryDeleteEvent);
   }, [user, selectedCategoryId]);
 
-  const filteredTasks =
-    selectedCategoryId === "all"
-      ? tasks
-      : tasks.filter((t) => t.categoryId === selectedCategoryId);
+  const filteredTasks = tasks.filter((t) => {
+    // 1. Filter by category
+    if (selectedCategoryId !== "all" && t.categoryId !== selectedCategoryId) {
+      return false;
+    }
+    // 2. Filter by view (completed vs pending)
+    if (currentView === "tasks") {
+      return !t.completed;
+    }
+    if (currentView === "completed") {
+      return t.completed;
+    }
+    return true; // For statistics (though it uses raw tasks prop)
+  });
 
   // Show Skeleton if Auth is loading OR (User is logged in but Data hasn't arrived yet)
   if (loading || (user && !dataLoaded)) {
@@ -218,12 +228,18 @@ const App: React.FC = () => {
             </button>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-800">
-                {currentView === "tasks" ? "My Workspace" : "Dashboard"}
+                {currentView === "tasks"
+                  ? "My Workspace"
+                  : currentView === "completed"
+                    ? "Completed Tasks"
+                    : "Dashboard"}
               </h1>
-              {currentView === "tasks" && (
+              {currentView !== "statistics" && (
                 <p className="text-slate-500 text-xs md:text-sm hidden md:block">
-                  {tasks.filter((t) => !t.completed).length} pending tasks for
-                  today
+                  {filteredTasks.length}{" "}
+                  {currentView === "completed"
+                    ? "completed tasks"
+                    : "pending tasks"}
                 </p>
               )}
             </div>
@@ -256,7 +272,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth bg-slate-50/50">
-          {currentView === "tasks" ? (
+          {currentView !== "statistics" ? (
             <TaskList
               tasks={filteredTasks}
               categories={categories}

@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { Category } from "../types";
 import { User } from "firebase/auth";
-import { LayoutDashboard, CheckSquare, Plus, LogOut, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Plus,
+  LogOut,
+  X,
+  CheckCircle,
+} from "lucide-react";
 
 interface SidebarProps {
   categories: Category[];
@@ -10,8 +17,8 @@ interface SidebarProps {
   setSelectedCategoryId: (id: string) => void;
   user: User;
   onLogout: () => void;
-  currentView: "tasks" | "statistics";
-  setCurrentView: (view: "tasks" | "statistics") => void;
+  currentView: "tasks" | "statistics" | "completed";
+  setCurrentView: (view: "tasks" | "statistics" | "completed") => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -116,6 +123,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 <CheckSquare className="h-5 w-5" />
                 My Tasks
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView("completed");
+                  onMobileClose?.();
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+                  currentView === "completed"
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <CheckCircle className="h-5 w-5" />
+                Completed
               </button>
               <button
                 onClick={() => {
