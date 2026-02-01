@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Task, Category, Subtask } from "../types";
 import { getSmartTaskBreakdown } from "../services/geminiService";
-import { Plus, X, ListTodo, Sparkles } from "lucide-react";
+import {
+  Plus,
+  X,
+  ListTodo,
+  Sparkles,
+  Link as LinkIcon,
+  Clock,
+} from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -12,6 +19,7 @@ interface TaskModalProps {
   onSave: (task: Partial<Task>) => void;
   categories: Category[];
   initialData?: Task | null;
+  existingTasks?: Task[];
 }
 
 const TaskModal: React.FC<TaskModalProps> = ({
@@ -20,6 +28,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
   onSave,
   categories,
   initialData,
+  existingTasks = [],
 }) => {
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(
@@ -38,6 +47,14 @@ const TaskModal: React.FC<TaskModalProps> = ({
   const [newSubtask, setNewSubtask] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // New state for dependencies
+  const [linkedTaskId, setLinkedTaskId] = useState(
+    initialData?.dependencyId || "",
+  );
+  const [linkType, setLinkType] = useState<"sequential" | "parallel">(
+    initialData?.dependencyType || "sequential",
+  );
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
@@ -46,6 +63,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
       setDueDate(initialData.dueDate);
       setEstimatedMinutes(initialData.estimatedMinutes);
       setSubtasks(initialData.subtasks || []);
+      setLinkedTaskId(initialData.dependencyId || "");
+      setLinkType(initialData.dependencyType || "sequential");
     } else {
       // Reset form when opening new task
       if (isOpen) {
@@ -55,9 +74,39 @@ const TaskModal: React.FC<TaskModalProps> = ({
         setDueDate("");
         setEstimatedMinutes(30);
         setSubtasks([]);
+        setLinkedTaskId("");
+        setLinkType("sequential");
       }
     }
   }, [initialData, isOpen, categories]);
+
+  // Auto-schedule logic
+  useEffect(() => {
+    if (!linkedTaskId || !existingTasks) return;
+
+    const parent = existingTasks.find((t) => t.id === linkedTaskId);
+    if (!parent || !parent.dueDate) return;
+
+    const parentDate = new Date(parent.dueDate);
+    if (isNaN(parentDate.getTime())) return;
+
+    // Create a new date object to avoid mutating
+    let newDate = new Date(parentDate.getTime());
+
+    if (linkType === "sequential") {
+      // Add parent's duration to its start time
+      newDate.setMinutes(
+        newDate.getMinutes() + (parent.estimatedMinutes || 30),
+      );
+    }
+    // If parallel, it starts at the same time (newDate is already parentDate)
+
+    // Format for datetime-local input: YYYY-MM-DDTHH:mm
+    const pad = (n: number) => (n < 10 ? "0" + n : n);
+    const localIso = `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}T${pad(newDate.getHours())}:${pad(newDate.getMinutes())}`;
+
+    setDueDate(localIso);
+  }, [linkedTaskId, linkType, existingTasks]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +117,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
       dueDate,
       estimatedMinutes,
       subtasks,
+      dependencyId: linkedTaskId,
+      dependencyType: linkType,
     });
   };
 
@@ -241,6 +292,73 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  <div className="md:col-span-2 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                    <label className="block text-sm font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4" />
+                      Link to another task
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <select
+                          className="w-full px-4 py-2 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-200 outline-none"
+                          value={linkedTaskId}
+                          onChange={(e) => setLinkedTaskId(e.target.value)}
+                        >
+                          <option value="">No link (Independent)</option>
+                          {existingTasks
+                            .filter((t) => t.id !== initialData?.id)
+                            .map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.title} (
+                                {t.dueDate
+                                  ? new Date(t.dueDate).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                  : "No date"}
+                                )
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                      {linkedTaskId && (
+                        <div className="flex bg-white rounded-xl border border-indigo-200 p-1">
+                          <button
+                            type="button"
+                            onClick={() => setLinkType("sequential")}
+                            className={clsx(
+                              "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                              linkType === "sequential"
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "text-slate-500 hover:bg-slate-50",
+                            )}
+                          >
+                            After (Sequential)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLinkType("parallel")}
+                            className={clsx(
+                              "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+                              linkType === "parallel"
+                                ? "bg-indigo-100 text-indigo-700"
+                                : "text-slate-500 hover:bg-slate-50",
+                            )}
+                          >
+                            With (Parallel)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {linkedTaskId && (
+                      <p className="text-xs text-indigo-600/80 mt-2 ml-1">
+                        {linkType === "sequential"
+                          ? "This task will start when the linked task ends."
+                          : "This task will happen at the same time."}
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Category
@@ -275,14 +393,20 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Due Date
+                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                      Due Date/Time
+                      {linkedTaskId && (
+                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200">
+                          Auto-Set
+                        </span>
+                      )}
                     </label>
                     <input
                       type="datetime-local"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
+                      disabled={!!linkedTaskId}
                     />
                   </div>
                 </div>

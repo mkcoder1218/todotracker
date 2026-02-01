@@ -24,6 +24,8 @@ export interface Task {
   userId: string;
   createdAt: number;
   subtasks?: Subtask[];
+  dependencyId?: string; // ID of the task this one is connected to
+  dependencyType?: "sequential" | "parallel"; // "sequential" = after, "parallel" = during
 }
 
 export interface UserProfile {

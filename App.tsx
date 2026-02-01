@@ -286,6 +286,7 @@ const App: React.FC = () => {
           }
           categories={categories}
           initialData={editingTask}
+          existingTasks={tasks}
         />
       )}
     </div>
