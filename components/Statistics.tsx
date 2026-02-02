@@ -65,61 +65,86 @@ const Statistics: React.FC<StatisticsProps> = ({ tasks, categories }) => {
   return (
     <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Tasks</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalTasks}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Total Tasks
+            </p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">
+              {totalTasks}
+            </h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
             <CheckCircle className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
               Completion Rate
             </p>
-            <h3 className="text-2xl font-bold text-slate-800">
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">
               {completionRate}%
             </h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 transition-colors">
+          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
             <Clock className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Est. Hours</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalHours}h</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              Est. Hours
+            </p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">
+              {totalHours}h
+            </h3>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">
             Tasks by Category
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={tasksByCategory}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#e2e8f0"
+                  opacity={0.3}
+                />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
+                />
                 <Tooltip
-                  cursor={{ fill: "#f8fafc" }}
+                  cursor={{ fill: "rgba(255,255,255,0.1)" }}
                   contentStyle={{
                     borderRadius: "12px",
                     border: "none",
-                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    backgroundColor: "rgba(30, 41, 59, 0.9)",
+                    color: "#fff",
                   }}
+                  itemStyle={{ color: "#fff" }}
                 />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {tasksByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -129,8 +154,8 @@ const Statistics: React.FC<StatisticsProps> = ({ tasks, categories }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">
             Completion Status
           </h3>
           <div className="h-64">
@@ -144,6 +169,7 @@ const Statistics: React.FC<StatisticsProps> = ({ tasks, categories }) => {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  stroke="none"
                 >
                   {completionData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -153,10 +179,19 @@ const Statistics: React.FC<StatisticsProps> = ({ tasks, categories }) => {
                   contentStyle={{
                     borderRadius: "12px",
                     border: "none",
-                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    backgroundColor: "rgba(30, 41, 59, 0.9)",
+                    color: "#fff",
                   }}
+                  itemStyle={{ color: "#fff" }}
                 />
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  formatter={(value) => (
+                    <span style={{ color: "#94a3b8" }}>{value}</span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

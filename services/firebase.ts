@@ -87,11 +87,17 @@ const mockAuth = {
 export const auth = isFirebaseConfigured ? _auth : mockAuth;
 export const db = isFirebaseConfigured ? _db : {};
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope("https://www.googleapis.com/auth/calendar");
+googleProvider.addScope("https://www.googleapis.com/auth/calendar.events");
 
 export const loginWithGoogle = async () => {
   if (isFirebaseConfigured && _auth) {
     try {
       const result = await signInWithPopup(_auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        localStorage.setItem("google_access_token", credential.accessToken);
+      }
       return result.user;
     } catch (error: any) {
       console.error("Firebase Auth Error Details:", error);

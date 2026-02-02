@@ -73,9 +73,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col md:flex-row font-sans selection:bg-indigo-100 bg-slate-50">
+    <div className="h-screen w-screen flex flex-col md:flex-row font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900 bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Branding Panel */}
-      <div className="hidden md:flex md:w-5/12 bg-indigo-600 items-center justify-center p-12 text-white relative overflow-hidden">
+      <div className="hidden md:flex md:w-5/12 bg-indigo-600 dark:bg-indigo-900 items-center justify-center p-12 text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10">
           <svg
             className="w-full h-full"
@@ -132,18 +132,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
         <div className="w-full max-w-md space-y-8 py-12">
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-slate-900">Sign In</h2>
-            <p className="text-slate-500">Access your synchronized workspace</p>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Sign In
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400">
+              Access your synchronized workspace
+            </p>
           </div>
 
           <div className="space-y-6">
             {error ? (
-              <div className="bg-white border-2 border-red-50 rounded-[2rem] shadow-2xl shadow-red-100/50 p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white dark:bg-slate-900 border-2 border-red-50 dark:border-red-900/30 rounded-[2rem] shadow-2xl shadow-red-100/50 dark:shadow-none p-8 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col items-center text-center space-y-3">
-                  <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-red-500"
+                      className="h-6 w-6 text-red-500 dark:text-red-400"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -156,23 +160,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                     {error.title}
                   </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                     {error.message}
                   </p>
                 </div>
 
                 {/* Always show the Domain info if it exists, as it's the primary fix */}
                 {error.domain && (
-                  <div className="space-y-4 pt-4 border-t border-slate-100">
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
                         Copy This Identity:
                       </label>
                       <div className="flex flex-col gap-3">
-                        <code className="bg-white px-4 py-3 rounded-xl border border-slate-200 text-indigo-600 font-mono text-xs font-bold break-all text-center">
+                        <code className="bg-white dark:bg-slate-900 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 font-mono text-xs font-bold break-all text-center">
                           {error.domain}
                         </code>
                         <button
@@ -180,7 +184,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                           className={`w-full py-3 rounded-xl text-xs font-bold transition-all ${
                             copied
                               ? "bg-green-500 text-white shadow-lg"
-                              : "bg-slate-900 text-white hover:bg-slate-800"
+                              : "bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 dark:hover:bg-slate-600"
                           }`}
                         >
                           {copied
@@ -190,7 +194,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       </div>
                     </div>
 
-                    <div className="text-[11px] text-slate-500 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 leading-relaxed">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/20 leading-relaxed">
                       <strong>Fix Instructions:</strong> Go to{" "}
                       <strong>Firebase Console</strong> &gt;{" "}
                       <strong>Auth</strong> &gt; <strong>Settings</strong> &gt;{" "}
@@ -203,13 +207,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={handleLogin}
-                    className="w-full py-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl text-sm hover:bg-indigo-100 transition-all"
+                    className="w-full py-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold rounded-2xl text-sm hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-all"
                   >
                     Try Signing In Again
                   </button>
                   <button
                     onClick={enableDemoMode}
-                    className="w-full py-4 text-slate-400 font-bold rounded-2xl text-xs uppercase tracking-widest hover:text-slate-600 transition-all"
+                    className="w-full py-4 text-slate-400 dark:text-slate-500 font-bold rounded-2xl text-xs uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 transition-all"
                   >
                     Skip and Use Demo Mode
                   </button>
@@ -220,7 +224,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <button
                   onClick={handleLogin}
                   disabled={isLoggingIn}
-                  className="group w-full flex items-center justify-center gap-4 px-8 py-5 bg-white border-2 border-slate-200 rounded-[2rem] text-slate-700 font-bold hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-50 transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="group w-full flex items-center justify-center gap-4 px-8 py-5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-[2rem] text-slate-700 dark:text-white font-bold hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-50 dark:hover:shadow-none transition-all active:scale-[0.98] disabled:opacity-50"
                 >
                   <img
                     src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -235,7 +239,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 {!isFirebaseConfigured && (
                   <button
                     onClick={enableDemoMode}
-                    className="w-full py-4 text-slate-400 text-sm font-semibold hover:text-indigo-600 transition-colors"
+                    className="w-full py-4 text-slate-400 dark:text-slate-500 text-sm font-semibold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                   >
                     Launch Demo Preview
                   </button>
@@ -245,7 +249,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div className="pt-8 text-center">
-            <p className="text-slate-300 text-[10px] font-black uppercase tracking-[0.4em]">
+            <p className="text-slate-300 dark:text-slate-700 text-[10px] font-black uppercase tracking-[0.4em]">
               Productivity Redefined
             </p>
           </div>

@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle,
 } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface SidebarProps {
   categories: Category[];
@@ -70,13 +71,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <aside
         className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:static shadow-xl md:shadow-none
+        fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:static shadow-xl md:shadow-none
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
       `}
       >
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-100 dark:shadow-none">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -92,19 +93,19 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               ZenTask AI
             </h2>
           </div>
           <button
             onClick={onMobileClose}
-            className="md:hidden p-2 text-slate-400 hover:text-slate-600"
+            className="md:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 space-y-8">
+        <div className="flex-1 overflow-y-auto px-4 space-y-8 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
           <section>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 px-2">
               Menu
@@ -117,8 +118,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                   currentView === "tasks"
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <CheckSquare className="h-5 w-5" />
@@ -131,8 +132,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                   currentView === "completed"
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <CheckCircle className="h-5 w-5" />
@@ -145,8 +146,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                   currentView === "statistics"
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <LayoutDashboard className="h-5 w-5" />
@@ -162,18 +163,18 @@ const Sidebar: React.FC<SidebarProps> = ({
               </p>
               <button
                 onClick={() => setShowAddCat(!showAddCat)}
-                className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
 
             {showAddCat && (
-              <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-3 animate-in slide-in-from-top-2">
+              <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 space-y-3 animate-in slide-in-from-top-2">
                 <input
                   type="text"
                   placeholder="Category name..."
-                  className="w-full text-sm px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-100 outline-none"
+                  className="w-full text-sm px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   autoFocus
@@ -183,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       key={c}
                       onClick={() => setNewCatColor(c)}
-                      className={`w-5 h-5 rounded-full ring-2 ring-offset-1 transition-all ${newCatColor === c ? "ring-slate-400" : "ring-transparent"}`}
+                      className={`w-5 h-5 rounded-full ring-2 ring-offset-1 dark:ring-offset-slate-800 transition-all ${newCatColor === c ? "ring-slate-400 dark:ring-slate-400" : "ring-transparent"}`}
                       style={{ backgroundColor: c }}
                     />
                   ))}
@@ -191,13 +192,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex gap-2">
                   <button
                     onClick={handleAdd}
-                    className="flex-1 bg-indigo-600 text-white text-xs py-2 rounded-lg font-medium shadow-sm"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 rounded-lg font-medium shadow-sm transition-colors"
                   >
                     Add
                   </button>
                   <button
                     onClick={() => setShowAddCat(false)}
-                    className="px-3 py-2 bg-white border border-slate-200 text-slate-600 text-xs rounded-lg hover:bg-slate-50"
+                    className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                   >
                     Cancel
                   </button>
@@ -214,8 +215,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm font-medium ${
                   selectedCategoryId === "all" && currentView === "tasks"
-                    ? "bg-slate-100 text-slate-900"
-                    : "text-slate-500 hover:bg-slate-50"
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -234,8 +235,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm font-medium ${
                       selectedCategoryId === cat.id && currentView === "tasks"
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-slate-500 hover:bg-slate-50"
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                   >
                     <span className="flex items-center gap-3">
@@ -255,15 +256,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                           `Delete category "${cat.name}"? This will not delete tasks in it.`,
                         )
                       ) {
-                        // Call the delete handler passed from App (we need to add this prop)
-                        // For now, we'll dispatch a custom event or need to update the interface
                         const event = new CustomEvent("delete-category", {
                           detail: cat.id,
                         });
                         window.dispatchEvent(event);
                       }
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10"
                     title="Delete Category"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -274,23 +273,31 @@ const Sidebar: React.FC<SidebarProps> = ({
           </section>
         </div>
 
-        <div className="p-4 border-t border-slate-100">
-          <div className="bg-slate-50 p-3 rounded-2xl flex items-center gap-3 mb-2">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Theme
+            </span>
+            <ThemeToggle />
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl flex items-center gap-3">
             <img
               src={user.photoURL || "https://picsum.photos/40/40"}
-              className="w-10 h-10 rounded-full border border-white shadow-sm"
+              className="w-10 h-10 rounded-full border border-white dark:border-slate-600 shadow-sm"
               alt="User"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-800 truncate">
+              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
                 {user.displayName || "User"}
               </p>
-              <p className="text-xs text-slate-500 truncate">{user.email}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {user.email}
+              </p>
             </div>
           </div>
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all text-sm font-medium"
           >
             <LogOut className="h-4 w-4" />
             Sign Out

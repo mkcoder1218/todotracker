@@ -26,6 +26,8 @@ export interface Task {
   subtasks?: Subtask[];
   dependencyId?: string; // ID of the task this one is connected to
   dependencyType?: "sequential" | "parallel"; // "sequential" = after, "parallel" = during
+  order?: number;
+  googleEventId?: string;
 }
 
 export interface UserProfile {

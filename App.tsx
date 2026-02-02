@@ -13,7 +13,6 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  orderBy,
   isFirebaseConfigured,
 } from "./services/firebase";
 import { Category, Task } from "./types";
@@ -22,9 +21,14 @@ import TaskList from "./components/TaskList";
 import TaskModal from "./components/TaskModal";
 import Login from "./components/Login";
 import { AppSkeleton } from "./components/AppSkeleton";
-import { Menu } from "lucide-react";
+import { Menu, Shuffle, Calendar, Share2 } from "lucide-react";
+import { DropResult } from "@hello-pangea/dnd";
 import Statistics from "./components/Statistics";
 import TaskDetailModal from "./components/TaskDetailModal";
+import {
+  createTaskEvent,
+  signInToGoogleCalendar,
+} from "./services/calendarService";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +45,11 @@ const App: React.FC = () => {
     "tasks" | "statistics" | "completed"
   >("tasks");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // New State for Sort/Shuffle
+  const [sortBy, setSortBy] = useState<
+    "default" | "dueDate" | "priority" | "alpha"
+  >("default");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser: User | null) => {
@@ -65,6 +74,7 @@ const App: React.FC = () => {
         const taskData = snapshot.docs.map(
           (doc: any) => ({ id: doc.id, ...doc.data() }) as Task,
         );
+        // Initial default sort
         taskData.sort(
           (a: Task, b: Task) => (b.createdAt || 0) - (a.createdAt || 0),
         );
@@ -170,20 +180,221 @@ const App: React.FC = () => {
       window.removeEventListener("delete-category", handleCategoryDeleteEvent);
   }, [user, selectedCategoryId]);
 
-  const filteredTasks = tasks.filter((t) => {
-    // 1. Filter by category
-    if (selectedCategoryId !== "all" && t.categoryId !== selectedCategoryId) {
-      return false;
+  // ... existing code ...
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncAll = async () => {
+    // Filter tasks that are pending, have a due date, and haven't been synced yet
+    const tasksToSync = tasks.filter(
+      (t) => !t.completed && t.dueDate && !t.googleEventId,
+    );
+
+    if (tasksToSync.length === 0) {
+      alert(
+        "No new tasks to sync! (Only pending tasks with due dates are synced)",
+      );
+      return;
     }
-    // 2. Filter by view (completed vs pending)
-    if (currentView === "tasks") {
-      return !t.completed;
+
+    if (!confirm(`Sync ${tasksToSync.length} tasks to Google Calendar?`)) {
+      return;
     }
-    if (currentView === "completed") {
-      return t.completed;
+
+    setIsSyncing(true);
+
+    let accessToken: string;
+    try {
+      // Authenticate ONCE before the loop to avoid "popup blocked" errors
+      accessToken = await signInToGoogleCalendar();
+    } catch (authError) {
+      console.error("Authentication failed or cancelled:", authError);
+      alert("Sync cancelled: Google Calendar sign-in failed.");
+      setIsSyncing(false);
+      return;
     }
-    return true; // For statistics (though it uses raw tasks prop)
-  });
+
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const task of tasksToSync) {
+        try {
+          const result = await createTaskEvent(task, accessToken);
+          if (result && result.id) {
+            await updateDoc(doc(db, "tasks", task.id), {
+              googleEventId: result.id,
+            });
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Failed to sync task ${task.title}`, error);
+          failCount++;
+        }
+      }
+      alert(
+        `Sync Complete!\nSuccessfully added: ${successCount}\nFailed: ${failCount}`,
+      );
+    } catch (error) {
+      console.error("Global sync error", error);
+      alert("An error occurred during sync.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleBulkTransfer = async () => {
+    // We transfer the tasks CURRENTLY VISIBLE in the list (filteredTasks)
+    // This allows the user to filter by category/etc and then transfer just those.
+    const tasksToTransfer = filteredTasks;
+
+    if (tasksToTransfer.length === 0) {
+      alert("No tasks available to transfer.");
+      return;
+    }
+
+    const targetUid = prompt(
+      `Enter User ID to transfer ${tasksToTransfer.length} tasks to:`,
+    );
+    if (!targetUid) return;
+
+    if (
+      !confirm(
+        `Are you sure you want to transfer ${tasksToTransfer.length} tasks? You will lose access to them.`,
+      )
+    ) {
+      return;
+    }
+
+    // Batch update
+    try {
+      await Promise.all(
+        tasksToTransfer.map((t) =>
+          updateDoc(doc(db, "tasks", t.id), { userId: targetUid }),
+        ),
+      );
+      alert("Bulk transfer complete!");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to transfer some tasks.");
+    }
+  };
+
+  const handleShuffle = () => {
+    if (sortBy === "priority") {
+      setSortBy("default");
+    } else {
+      setSortBy("priority");
+    }
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) return;
+
+    // Create a copy of the current visible tasks
+    const currentTasks = [...filteredTasks];
+    const [reorderedItem] = currentTasks.splice(sourceIndex, 1);
+    currentTasks.splice(destinationIndex, 0, reorderedItem);
+
+    // Optimistically update the UI is tricky because 'tasks' is the source of truth
+    // and filteredTasks is derived.
+    // We will just update Firestore and let the snapshot listener update the UI.
+    // To make it smooth, we could update local state key, but let's rely on FS for now since it's fast.
+
+    // Calculate new orders.
+    // Simple strategy: Re-index the entire filtered list with spacing
+    // If we are viewing a subset (Category A), we re-index them 0, 1, 2...
+    // which might overlap with Category B's tasks order 0, 1, 2.
+    // To avoid collision, we should perhaps use a large timestamp or float,
+    // but for a simple personal app, simple re-indexing of the *modified* items is okay?
+    // Actually, if we use a global order field, reordering a subset changes their relative order.
+    // Let's just update the `order` field for ALL visible tasks to match their new visual index.
+
+    // Note: This overrides previous global orderings for these tasks, which is expected.
+    // Using a large gap (e.g. index * 1000) allows inserting later without rewrite,
+    // but a full rewrite of 50 items is cheap.
+
+    const updates = currentTasks.map((task, index) => ({
+      id: task.id,
+      order: index,
+    }));
+
+    // Batch update to Firestore
+    try {
+      // We use Promise.all for parallel updates.
+      // In a real app we'd use a WriteBatch.
+      await Promise.all(
+        updates.map((u) =>
+          updateDoc(doc(db, "tasks", u.id), { order: u.order }),
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to reorder tasks", error);
+    }
+  };
+
+  const filteredTasks = tasks
+    .filter((t) => {
+      // 1. Filter by category
+      if (selectedCategoryId !== "all" && t.categoryId !== selectedCategoryId) {
+        return false;
+      }
+      // 2. Filter by view (completed vs pending)
+      if (currentView === "tasks") {
+        return !t.completed;
+      }
+      if (currentView === "completed") {
+        return t.completed;
+      }
+      return true; // For statistics (though it uses raw tasks prop)
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "dueDate":
+          return (
+            (a.dueDate ? new Date(a.dueDate).getTime() : 9999999999999) -
+            (b.dueDate ? new Date(b.dueDate).getTime() : 9999999999999)
+          );
+        case "alpha":
+          return a.title.localeCompare(b.title);
+        case "priority":
+          // Smart Sort: Overdue first, then by due date, then by estimated time (quickest first)
+          const now = Date.now();
+          const aDue = a.dueDate
+            ? new Date(a.dueDate).getTime()
+            : 9999999999999;
+          const bDue = b.dueDate
+            ? new Date(b.dueDate).getTime()
+            : 9999999999999;
+
+          // If one is overdue and other isn't
+          const aOverdue = aDue < now;
+          const bOverdue = bDue < now;
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+
+          // If multiple overdue, sort by date descending (most overdue)
+          if (aOverdue && bOverdue) return aDue - bDue;
+
+          // Otherwise sort by due date imminent
+          if (aDue !== bDue) return aDue - bDue;
+
+          // Tie break: shortest task first (Quick Win)
+          return (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
+        default:
+          // Default is 'order' asc.
+          // If order is undefined, fallback to createdAt desc (newest first)
+          if (a.order !== undefined && b.order !== undefined) {
+            return a.order - b.order;
+          }
+          // If timestamps equal, fallback?
+          return (b.createdAt || 0) - (a.createdAt || 0);
+      }
+    });
 
   // Show Skeleton if Auth is loading OR (User is logged in but Data hasn't arrived yet)
   if (loading || (user && !dataLoaded)) {
@@ -195,7 +406,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-200">
       <Sidebar
         categories={categories}
         onAddCategory={handleAddCategory}
@@ -209,25 +420,25 @@ const App: React.FC = () => {
         onMobileClose={() => setIsMobileMenuOpen(false)}
       />
 
-      <main className="flex-1 flex flex-col min-w-0 bg-white shadow-xl md:m-2 md:rounded-3xl overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 shadow-xl md:m-2 md:rounded-3xl overflow-hidden relative border border-slate-200 dark:border-slate-800 transition-all duration-200">
         {!isFirebaseConfigured && (
           <div className="absolute top-4 right-4 z-10 hidden md:block">
-            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm border border-amber-200">
+            <span className="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm border border-amber-200 dark:border-amber-700/50">
               Demo Mode
             </span>
           </div>
         )}
 
-        <header className="p-4 md:p-6 flex justify-between items-center border-b border-slate-100 bg-white z-20">
+        <header className="p-4 md:p-6 flex justify-between items-center border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-20">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors"
+              className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-xl transition-colors"
             >
               <Menu className="h-6 w-6" />
             </button>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-800">
+              <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-white">
                 {currentView === "tasks"
                   ? "My Workspace"
                   : currentView === "completed"
@@ -235,7 +446,7 @@ const App: React.FC = () => {
                     : "Dashboard"}
               </h1>
               {currentView !== "statistics" && (
-                <p className="text-slate-500 text-xs md:text-sm hidden md:block">
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm hidden md:block">
                   {filteredTasks.length}{" "}
                   {currentView === "completed"
                     ? "completed tasks"
@@ -246,32 +457,76 @@ const App: React.FC = () => {
           </div>
 
           {currentView === "tasks" && (
-            <button
-              onClick={() => {
-                setEditingTask(null);
-                setIsTaskModalOpen(true);
-              }}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2 text-sm font-medium active:scale-95"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+            <div className="flex items-center gap-2">
+              <div className="hidden md:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <select
+                  className="bg-transparent border-none text-xs font-semibold text-slate-600 dark:text-slate-300 focus:ring-0 cursor-pointer pl-2 pr-8"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                >
+                  <option value="default">Manual</option>
+                  <option value="dueDate">Due Date</option>
+                  <option value="priority">Smart Priority</option>
+                  <option value="alpha">A-Z</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleSyncAll}
+                disabled={isSyncing}
+                title="Sync pending tasks to Google Calendar"
+                className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-colors disabled:opacity-50"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="hidden md:inline">Add Task</span>
-              <span className="md:hidden">Add</span>
-            </button>
+                {isSyncing ? (
+                  <span className="animate-spin block">⌛</span>
+                ) : (
+                  <Calendar className="h-5 w-5" />
+                )}
+              </button>
+
+              <button
+                onClick={handleBulkTransfer}
+                title="Transfer visible tasks to another user"
+                className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-colors"
+              >
+                <Share2 className="h-5 w-5" />
+              </button>
+
+              <button
+                onClick={handleShuffle}
+                title="Smart Shuffle: Prioritize Overdue & Quick Wins"
+                className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl transition-colors"
+              >
+                <Shuffle className="h-5 w-5" />
+              </button>
+
+              <button
+                onClick={() => {
+                  setEditingTask(null);
+                  setIsTaskModalOpen(true);
+                }}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all flex items-center gap-2 text-sm font-medium active:scale-95 ease-in-out"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="hidden md:inline">Add Task</span>
+                <span className="md:hidden">Add</span>
+              </button>
+            </div>
           )}
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
           {currentView !== "statistics" ? (
             <TaskList
               tasks={filteredTasks}
@@ -283,6 +538,7 @@ const App: React.FC = () => {
               onEditTask={(task) => {
                 setViewingTask(task);
               }}
+              onDragEnd={sortBy === "default" ? handleDragEnd : undefined}
             />
           ) : (
             <Statistics tasks={tasks} categories={categories} />

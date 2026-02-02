@@ -101,7 +101,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
     }
     // If parallel, it starts at the same time (newDate is already parentDate)
 
-    // Format for datetime-local input: YYYY-MM-DDTHH:mm
     const pad = (n: number) => (n < 10 ? "0" + n : n);
     const localIso = `${newDate.getFullYear()}-${pad(newDate.getMonth() + 1)}-${pad(newDate.getDate())}T${pad(newDate.getHours())}:${pad(newDate.getMinutes())}`;
 
@@ -179,17 +178,17 @@ const TaskModal: React.FC<TaskModalProps> = ({
       />
       <div
         className={clsx(
-          "fixed inset-y-0 right-0 z-50 w-full md:w-[600px] bg-white shadow-2xl transition-transform duration-300 ease-in-out transform",
+          "fixed inset-y-0 right-0 z-50 w-full md:w-[600px] bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-300 ease-in-out transform border-l border-slate-200 dark:border-slate-800",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
         <div className="h-full flex flex-col">
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 sticky top-0 z-10">
             <div>
-              <h2 className="text-2xl font-bold text-slate-900">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 {initialData ? "Edit Task" : "New Task"}
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 {initialData
                   ? "Make changes to your task"
                   : "Create a new task for your workspace"}
@@ -197,30 +196,30 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
             <form id="task-form" onSubmit={handleSubmit} className="space-y-8">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                     Title & Description
                   </label>
                   <input
                     type="text"
                     required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all mb-4 text-lg font-medium"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all mb-4 text-lg font-medium text-slate-900 dark:text-white placeholder:text-slate-400"
                     placeholder="Task title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                   <div className="relative">
                     <textarea
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all h-32 resize-none"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all h-32 resize-none text-slate-600 dark:text-slate-300 placeholder:text-slate-400"
                       placeholder="Add descriptions..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -229,7 +228,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       type="button"
                       onClick={handleAiBreakdown}
                       disabled={isAiLoading || !title}
-                      className="absolute bottom-3 right-3 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 flex items-center gap-1 disabled:opacity-50 transition-colors"
+                      className="absolute bottom-3 right-3 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/60 flex items-center gap-1 disabled:opacity-50 transition-colors"
                     >
                       {isAiLoading ? (
                         <Sparkles className="h-3.5 w-3.5 animate-spin" />
@@ -243,20 +242,20 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
                 <div>
                   <div className="flex justify-between items-end mb-3">
-                    <label className="block text-sm font-semibold text-slate-700">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
                       Subtasks
                     </label>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                       {subtasks.filter((s) => s.completed).length}/
                       {subtasks.length} completed
                     </span>
                   </div>
 
-                  <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                        className="flex-1 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
                         placeholder="Add a subtask..."
                         value={newSubtask}
                         onChange={(e) => setNewSubtask(e.target.value)}
@@ -265,20 +264,20 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleAddSubtask()}
-                        className="p-2 bg-slate-200 text-slate-600 rounded-xl hover:bg-indigo-600 hover:text-white transition-colors"
+                        className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 transition-colors"
                       >
                         <Plus className="h-5 w-5" />
                       </button>
                     </div>
 
                     {subtasks.length > 0 ? (
-                      <ul className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      <ul className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
                         {subtasks.map((task) => (
                           <li
                             key={task.id}
-                            className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl text-sm group hover:shadow-sm transition-all"
+                            className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm group hover:shadow-sm transition-all"
                           >
-                            <span className="truncate flex-1 mr-2 text-slate-700">
+                            <span className="truncate flex-1 mr-2 text-slate-700 dark:text-slate-300">
                               {task.title}
                             </span>
                             <button
@@ -292,7 +291,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                         ))}
                       </ul>
                     ) : (
-                      <div className="text-center py-4 text-slate-400 text-xs">
+                      <div className="text-center py-4 text-slate-400 dark:text-slate-500 text-xs">
                         No subtasks yet. Add one or rely on AI!
                       </div>
                     )}
@@ -300,15 +299,15 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  <div className="md:col-span-2 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                    <label className="block text-sm font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+                  <div className="md:col-span-2 bg-indigo-50/50 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                    <label className="block text-sm font-semibold text-indigo-900 dark:text-indigo-300 mb-2 flex items-center gap-2">
                       <LinkIcon className="h-4 w-4" />
                       Link to another task
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <select
-                          className="w-full px-4 py-2 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-200 outline-none"
+                          className="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-200 dark:focus:ring-indigo-900 outline-none text-slate-900 dark:text-white"
                           value={linkedTaskId}
                           onChange={(e) => setLinkedTaskId(e.target.value)}
                         >
@@ -331,15 +330,15 @@ const TaskModal: React.FC<TaskModalProps> = ({
                         </select>
                       </div>
                       {linkedTaskId && (
-                        <div className="flex bg-white rounded-xl border border-indigo-200 p-1">
+                        <div className="flex bg-white dark:bg-slate-800 rounded-xl border border-indigo-200 dark:border-indigo-800 p-1">
                           <button
                             type="button"
                             onClick={() => setLinkType("sequential")}
                             className={clsx(
                               "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
                               linkType === "sequential"
-                                ? "bg-indigo-100 text-indigo-700"
-                                : "text-slate-500 hover:bg-slate-50",
+                                ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
                             )}
                           >
                             After (Sequential)
@@ -350,8 +349,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
                             className={clsx(
                               "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
                               linkType === "parallel"
-                                ? "bg-indigo-100 text-indigo-700"
-                                : "text-slate-500 hover:bg-slate-50",
+                                ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700",
                             )}
                           >
                             With (Parallel)
@@ -360,7 +359,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       )}
                     </div>
                     {linkedTaskId && (
-                      <p className="text-xs text-indigo-600/80 mt-2 ml-1">
+                      <p className="text-xs text-indigo-600/80 dark:text-indigo-400/80 mt-2 ml-1">
                         {linkType === "sequential"
                           ? "This task will start when the linked task ends."
                           : "This task will happen at the same time."}
@@ -369,12 +368,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                       Category
                     </label>
                     <div className="relative">
                       <select
-                        className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all appearance-none"
+                        className="w-full pl-4 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all appearance-none text-slate-900 dark:text-white"
                         value={categoryId}
                         onChange={(e) => setCategoryId(e.target.value)}
                       >
@@ -384,7 +383,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                           </option>
                         ))}
                       </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
+                      <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500 dark:text-slate-400">
                         <svg
                           className="h-4 w-4"
                           fill="none"
@@ -403,65 +402,46 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                       Start Date & Time
                       {linkedTaskId && (
-                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200">
+                        <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
                           Auto-Set
                         </span>
                       )}
                     </label>
                     {!linkedTaskId && (
                       <div className="flex flex-wrap gap-2 mb-2">
-                        <button
-                          type="button"
-                          onClick={() => setStartIn(0)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
-                        >
-                          Now
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStartIn(10)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
-                        >
-                          +10m
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStartIn(20)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
-                        >
-                          +20m
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStartIn(30)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
-                        >
-                          +30m
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStartIn(60)}
-                          className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs rounded-md transition-colors"
-                        >
-                          +1h
-                        </button>
+                        {[
+                          { label: "Now", val: 0 },
+                          { label: "+10m", val: 10 },
+                          { label: "+20m", val: 20 },
+                          { label: "+30m", val: 30 },
+                          { label: "+1h", val: 60 },
+                        ].map((t) => (
+                          <button
+                            key={t.label}
+                            type="button"
+                            onClick={() => setStartIn(t.val)}
+                            className="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-md transition-colors"
+                          >
+                            {t.label}
+                          </button>
+                        ))}
                       </div>
                     )}
                     <input
                       type="datetime-local"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark]"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
                       disabled={!!linkedTaskId}
                     />
                     {dueDate && (
-                      <p className="text-xs text-slate-500 mt-2 flex items-center gap-1.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1.5">
                         <Clock className="h-3 w-3" />
                         Deadline:{" "}
-                        <span className="font-medium text-slate-700">
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
                           {(() => {
                             const d = new Date(dueDate);
                             d.setMinutes(
@@ -474,7 +454,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                             });
                           })()}
                         </span>
-                        <span className="text-slate-400">
+                        <span className="text-slate-400 dark:text-slate-500">
                           ({estimatedMinutes}m duration)
                         </span>
                       </p>
@@ -483,12 +463,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                     Estimated Time (minutes)
                   </label>
                   <input
                     type="number"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900 outline-none transition-all text-slate-900 dark:text-white"
                     value={estimatedMinutes}
                     onChange={(e) =>
                       setEstimatedMinutes(Number(e.target.value))
@@ -500,7 +480,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                         key={m}
                         type="button"
                         onClick={() => setEstimatedMinutes(m)}
-                        className="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-lg hover:bg-slate-200"
+                        className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
                       >
                         {m}m
                       </button>
@@ -511,19 +491,19 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </form>
           </div>
 
-          <div className="p-6 border-t border-slate-100 bg-white">
+          <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-6 py-4 border border-slate-200 text-slate-700 font-bold rounded-2xl hover:bg-slate-50 transition-all text-sm"
+                className="flex-1 px-6 py-4 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 form="task-form"
-                className="flex-1 px-6 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all text-sm active:scale-[0.98]"
+                className="flex-1 px-6 py-4 bg-indigo-600 dark:bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 dark:hover:bg-indigo-500 shadow-xl shadow-indigo-100 dark:shadow-indigo-900/20 transition-all text-sm active:scale-[0.98]"
               >
                 {initialData ? "Save Changes" : "Create Task"}
               </button>
