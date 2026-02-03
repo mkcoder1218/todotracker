@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Task, Category } from "../types";
 import {
   X,
@@ -38,6 +38,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   linkedTask,
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
+  // Local state for optimistic UI updates
+  const [localSubtasks, setLocalSubtasks] = useState(task?.subtasks || []);
+
+  // Sync local state when task prop changes (from Firestore)
+  useEffect(() => {
+    if (task?.subtasks) {
+      setLocalSubtasks(task.subtasks);
+    }
+  }, [task?.subtasks]);
 
   if (!task) return null;
 
@@ -224,20 +233,38 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           )}
 
           {/* Subtasks */}
-          {task.subtasks && task.subtasks.length > 0 && (
+          {localSubtasks && localSubtasks.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 Subtasks
                 <span className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full text-xs font-normal">
-                  {task.subtasks.filter((s) => s.completed).length}/
-                  {task.subtasks.length}
+                  {localSubtasks.filter((s) => s.completed).length}/
+                  {localSubtasks.length}
                 </span>
               </h3>
               <div className="space-y-2">
-                {task.subtasks.map((sub) => (
+                {localSubtasks.map((sub) => (
                   <div
                     key={sub.id}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900"
+                    onClick={async () => {
+                      // Optimistically update local state immediately for instant feedback
+                      const updatedSubtasks = localSubtasks.map((s) =>
+                        s.id === sub.id ? { ...s, completed: !s.completed } : s,
+                      );
+                      setLocalSubtasks(updatedSubtasks);
+
+                      // Update Firestore in the background
+                      try {
+                        await updateDoc(doc(db, "tasks", task.id), {
+                          subtasks: updatedSubtasks,
+                        });
+                      } catch (error) {
+                        console.error("Error updating subtask:", error);
+                        // Revert on error
+                        setLocalSubtasks(localSubtasks);
+                      }
+                    }}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     {sub.completed ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
