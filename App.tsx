@@ -21,12 +21,13 @@ import TaskList from "./components/TaskList";
 import TaskModal from "./components/TaskModal";
 import Login from "./components/Login";
 import { AppSkeleton } from "./components/AppSkeleton";
-import { Menu, Shuffle, Calendar, Share2 } from "lucide-react";
+import { Menu, Shuffle, Calendar, Share2, AlarmClock } from "lucide-react";
 import { DropResult } from "@hello-pangea/dnd";
 import Statistics from "./components/Statistics";
 import TaskDetailModal from "./components/TaskDetailModal";
 import {
   createTaskEvent,
+  deleteTaskEvent,
   signInToGoogleCalendar,
 } from "./services/calendarService";
 
@@ -110,7 +111,7 @@ const App: React.FC = () => {
     if (!user) return;
     try {
       console.log("Attempting to add task:", taskData);
-      await addDoc(collection(db, "tasks"), {
+      const newTaskRef = await addDoc(collection(db, "tasks"), {
         ...taskData,
         userId: user.uid,
         completed: false,
@@ -118,6 +119,35 @@ const App: React.FC = () => {
         createdAt: Date.now(),
         actualMinutes: 0,
       });
+
+      // Auto-sync to Google Calendar if due date exists ("on create link")
+      if (taskData.dueDate) {
+        try {
+          console.log("Auto-syncing to Google Calendar...");
+          const token = await signInToGoogleCalendar();
+          // We need to construct the full task object for the sync function
+          // We use the ID from the new doc
+          const newTaskObj: Task = {
+            id: newTaskRef.id,
+            ...taskData,
+            userId: user.uid,
+            completed: false,
+            reminderSent: false,
+            createdAt: Date.now(),
+            actualMinutes: 0,
+          } as Task;
+
+          const eventResult = await createTaskEvent(newTaskObj, token);
+          if (eventResult && eventResult.id) {
+            await updateDoc(newTaskRef, { googleEventId: eventResult.id });
+            console.log("Auto-synced successfully, Event ID:", eventResult.id);
+          }
+        } catch (syncError) {
+          console.error("Auto-sync failed:", syncError);
+          // We don't block the UI for this, just log it.
+        }
+      }
+
       console.log("Task added successfully");
       setIsTaskModalOpen(false);
     } catch (error) {
@@ -130,6 +160,30 @@ const App: React.FC = () => {
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
+      // Check if we are marking as completed ("donot show on link")
+      if (updates.completed === true) {
+        const currentTask = tasks.find((t) => t.id === taskId);
+        if (currentTask && currentTask.googleEventId) {
+          try {
+            console.log("Task completed, removing from Google Calendar...");
+            // Attempt to delete
+            const token = await signInToGoogleCalendar();
+            await deleteTaskEvent(currentTask.googleEventId, token);
+
+            // Remove the ID from our local/firestore record
+            // casting updates to any to allow googleEventId assignment if not in Partial<Task>
+            (updates as any).googleEventId = null;
+
+            console.log("Removed from calendar successfully");
+          } catch (delError) {
+            console.error(
+              "Failed to remove completed task from calendar",
+              delError,
+            );
+          }
+        }
+      }
+
       await updateDoc(doc(db, "tasks", taskId), updates);
     } catch (error) {
       console.error("Error updating task:", error);
@@ -179,6 +233,43 @@ const App: React.FC = () => {
     return () =>
       window.removeEventListener("delete-category", handleCategoryDeleteEvent);
   }, [user, selectedCategoryId]);
+
+  // Independent Alarm System (Browser Notifications)
+  useEffect(() => {
+    if (!user || !tasks || tasks.length === 0) return;
+
+    // Request permission once if not denied
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    const checkReminders = setInterval(() => {
+      const now = Date.now();
+      tasks.forEach((task) => {
+        if (!task.completed && !task.reminderSent && task.dueDate) {
+          const dueTime = new Date(task.dueDate).getTime();
+          // Trigger if due time is reached (or within the last minute to avoid missed ticks)
+          // We check if it is NOW or slightly in the past (to catch up)
+          if (dueTime <= now) {
+            // Fire Notification
+            if (Notification.permission === "granted") {
+              new Notification(`Task Due: ${task.title}`, {
+                body: "Your task is due now! (Independent Alarm)",
+                icon: "/vite.svg", // Optional
+              });
+              // Play a simple beep if possible (or just rely on system notification sound)
+              // const audio = new Audio('/alarm.mp3'); audio.play().catch(e => {});
+            }
+
+            // Update DB to prevent duplicate alarms
+            updateDoc(doc(db, "tasks", task.id), { reminderSent: true });
+          }
+        }
+      });
+    }, 60000); // Check every minute or 30s
+
+    return () => clearInterval(checkReminders);
+  }, [user, tasks]);
 
   // ... existing code ...
   const [isSyncing, setIsSyncing] = useState(false);
@@ -470,6 +561,19 @@ const App: React.FC = () => {
                   <option value="alpha">A-Z</option>
                 </select>
               </div>
+
+              <button
+                onClick={handleSyncAll}
+                disabled={isSyncing}
+                title="Sync Tasks to Device Alarms"
+                className="p-2 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-800 text-rose-600 dark:text-rose-400 rounded-xl transition-colors disabled:opacity-50"
+              >
+                {isSyncing ? (
+                  <span className="animate-spin block">⌛</span>
+                ) : (
+                  <AlarmClock className="h-5 w-5" />
+                )}
+              </button>
 
               <button
                 onClick={handleSyncAll}
