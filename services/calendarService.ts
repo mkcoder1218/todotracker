@@ -60,7 +60,6 @@ export const createTaskEvent = async (task: Task, token?: string) => {
   const event = {
     summary: task.title,
     description: task.description || "",
-    transparency: "transparent", // Don't block the calendar (Independent Alarm behavior)
     start: {
       dateTime: new Date(task.dueDate).toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -71,13 +70,6 @@ export const createTaskEvent = async (task: Task, token?: string) => {
           (task.estimatedMinutes || 30) * 60 * 1000,
       ).toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    },
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: "popup", minutes: 0 }, // Alarm at the exact time
-        { method: "popup", minutes: 30 }, // Alarm 30 mins before
-      ],
     },
   };
 
@@ -99,38 +91,6 @@ export const createTaskEvent = async (task: Task, token?: string) => {
   }
 
   return res.json();
-};
-
-export const deleteTaskEvent = async (eventId: string, token?: string) => {
-  if (!token) {
-    if (!googleAccessToken) {
-      // Attempt to get token if not provided, assuming we might have it
-      // If not, we can't delete without auth
-      throw new Error("No access token. Call signInToGoogleCalendar first.");
-    }
-    token = googleAccessToken;
-  }
-
-  const res = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
-    {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    // If 410 (Gone) or 404 (Not Found), we can consider it a success locally
-    if (res.status === 410 || res.status === 404) {
-      return;
-    }
-    const errorBody = await res.json();
-    throw new Error(
-      `Google Calendar Delete Error: ${JSON.stringify(errorBody)}`,
-    );
-  }
 };
 // Removed initializeGoogleCalendar as it is no longer needed with GIS flow (loaded via script tag)
 export const initializeGoogleCalendar = async () => {}; // No-op for compatibility if needed
